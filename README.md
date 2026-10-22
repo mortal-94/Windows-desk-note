@@ -1,14 +1,23 @@
 # DeskNote
 
-DeskNote 是一张常驻 Windows 桌面的单页 TODO 草稿纸。它只有一个连续文档：按全局快捷键进入编辑，输入后再次按快捷键或 `Esc` 自动保存并回到桌面层。
+DeskNote 是一张常驻 Windows 桌面的单页 TODO 草稿纸。它只有一个连续文档：点击笔记或按全局快捷键进入编辑，点击笔记外部、再次按快捷键或 `Esc` 自动保存并回到桌面层。
 
-当前版本：`0.2.5`。
+当前版本：`0.2.6`。
+
+从 [GitHub Releases](https://github.com/mortal-94/Windows-desk-note/releases/latest) 下载 Windows x64 便携版：
+
+- `DeskNote-v0.2.6-win-x64.zip`：包含 .NET 运行时，解压后运行 `DeskNote.exe`；
+- `DeskNote-v0.2.6-win-x64-framework-dependent.zip`：精简版，需要预先安装 .NET 10 Desktop Runtime x64；
+- `SHA256SUMS.txt`：下载文件的 SHA-256 校验值。
+
+升级前在旧版笔记中点击“退出”，确认保存成功后再启动新版。请完整解压 ZIP；笔记保存在用户数据目录，升级时保留该目录。发布包不包含任何个人笔记、设置或备份。
 
 ## 已实现功能
 
 - 单一连续纯文本笔记；每个非空行自动成为 `☐`/`☑` TODO，空行不显示方框；
 - 编辑状态下点击行首方框即可完成/取消完成，仍支持选择、剪切/复制/粘贴和撤销/重做；
 - 桌面嵌入状态下点击笔记即可进入编辑；TODO 规范化等待中文 IME 提交后执行；
+- 编辑窗口失去激活（例如点击桌面或其它应用）时先保存再嵌入桌面；设置对话框、右键菜单操作期间保持编辑，保存失败则保留编辑内容并提示；
 - 启动、快捷键进入编辑以及返回桌面层时始终直接滚动到笔记末尾；
 - Explorer 可见桌面图标层嵌入，不使用“始终置顶”模拟；普通窗口可遮挡，Shell“显示桌面”后仍保留；
 - 默认 `Ctrl+Alt+N` 全局快捷键，支持在设置中修改；
@@ -41,7 +50,7 @@ DeskNote 是一张常驻 Windows 桌面的单页 TODO 草稿纸。它只有一�
 2. 按 `Ctrl+Alt+N` 进入编辑状态。窗口会定位到文档末尾；顶部区域可以拖动窗口，边缘可以调整尺寸。
 3. 直接输入；非空行会自动带上 TODO 方框，点击方框切换完成状态，停止输入 2 秒后自动保存。
 4. 按 `Ctrl+F` 搜索；按 `Esc` 先关闭搜索，再按一次退出编辑。
-5. 再按 `Ctrl+Alt+N` 或 `Esc`，立即保存并回到桌面层。
+5. 点击笔记外部，或再按 `Ctrl+Alt+N` / `Esc`，立即保存并回到桌面层。切换到其它应用也会触发同样行为。
 6. 编辑状态下点击“设置”修改外观、自动保存、备份数量或快捷键。
 
 如果快捷键已被其他软件占用，DeskNote 会保持在可见编辑状态并提示更换，不会把一个无法唤回的窗口留在桌面层。
@@ -95,6 +104,7 @@ dotnet run --project src\DeskNote.App\DeskNote.App.csproj
 src/DeskNote.Core/               平台无关的 TODO 文本、设置、搜索、快捷键解析和安全存储
 src/DeskNote.App/                WPF 界面、窗口状态机、Win32/Explorer 互操作
 tests/DeskNote.Tests/            MSTest 自动化测试
+tests/DeskNote.App.Tests/        隔离数据目录的 WPF STA 失焦与保存回归测试
 tools/DeskNote.PerformanceProbe/ WPF 大文本载入与搜索探针
 tools/DeskNote.DesktopProbe/     桌面父层、Z 序与“显示桌面”集成探针
 scripts/build.cmd / build.ps1    还原、测试、发布入口

@@ -89,6 +89,8 @@ dotnet run --project tools\DeskNote.PerformanceProbe\DeskNote.PerformanceProbe.c
 
 - [ ] 在目标 Windows 10 与 Windows 11 各验证一次桌面层和 `Win+D`；
 - [ ] 使用目标中文输入法输入、选词、撤销/重做和跨应用粘贴；
+- [ ] 点击桌面笔记进入编辑，再点击桌面空白、任务栏和其它应用，确认保存后重新嵌入且其它应用保留焦点；
+- [ ] 在设置、右键菜单和中文候选窗口中操作，确认不会误收起；关闭菜单后再点击外部应正常返回桌面；
 - [ ] 修改快捷键并验证冲突提示和旧快捷键回滚；
 - [ ] 拖动到每台显示器，修改 DPI 后检查位置和尺寸；
 - [ ] 在测试机器重启 Explorer，确认 1 秒内重新进入桌面层；
@@ -103,3 +105,15 @@ dotnet run --project tools\DeskNote.DesktopProbe\DeskNote.DesktopProbe.csproj `
 ```
 
 2026-08-12 本机结果：`PASS: desktop-layer invariants survived Minimize All.`
+
+## 2026-10-22 编辑窗口失焦返回（v0.2.6）
+
+新增 `DeskNote.App.Tests`，在 STA 线程上构造真实 WPF 窗口并触发 XAML 注册的失焦事件。窗口不显示、不注册快捷键、不调用 `App.OnStartup`，全部读写位于独立临时目录，不使用真实用户的数据路径。
+
+6 项回归通过：最新内容强制保存且原文进入备份、设置打开期间延后及结束后复查、菜单关闭后复查、桌面模式/切换期间忽略事件、待处理 TODO 输入在保存前完成规范化、独占锁导致保存失败时原文件及可编辑内存保持完整。测试没有实际的 Explorer HWND，因此不把这些结果视为已验证桌面嵌入或真人 IME 输入。
+
+最终格式检查通过；Release 构建 0 警告、0 错误；全量测试共 35 项通过（核心 29 + WPF 6）。框架依赖的 win-x64 v0.2.6 已生成到 `artifacts/publish/v0.2.6`。旧实例未在正常关闭请求后退出，因此未强制终止，也未覆盖正在运行的 v0.2.5 文件。
+
+数据验证发现，工具上下文中普通用户目录路径可能读到旧文件视图。发布前通过本机共享路径交叉核对真实交互会话文件，将主笔记、设置、恢复文件、日志和最新备份复制到被 Git 忽略的时间戳恢复目录，逐个验证 SHA-256；没有进行数据恢复回写。个人路径、笔记特征及本地恢复记录不纳入公开发布包。
+
+本轮 Windows 界面工具初始化和重置后重试均因 `windows sandbox failed: helper_unknown_error: setup refresh had errors` 退出，未执行真实鼠标点击、中文候选选择、多显示器或 Shell 重启验证。相关人工检查仍保留在上面的清单中。

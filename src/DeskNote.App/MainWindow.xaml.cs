@@ -40,6 +40,7 @@ public partial class MainWindow : Window
     private bool _textCompositionActive;
     private bool _todoNormalizationPending;
     private bool _forceDesktopRecoveryPending;
+    private bool _deactivationCheckPending;
     private int _desktopRecoveryFailures;
 
     internal MainWindow(AppDataPaths paths, FileLogger logger)
@@ -197,6 +198,11 @@ public partial class MainWindow : Window
 
         _ = Dispatcher.BeginInvoke(() =>
         {
+            if (!_editing || _allowClose)
+            {
+                return;
+            }
+
             Activate();
             NoteEditor.Focus();
             ScrollToDocumentEnd(moveCaret: true);
@@ -205,10 +211,23 @@ public partial class MainWindow : Window
 
     private async Task ExitEditingModeAsync()
     {
+        if (!_initialized || !_editing || _transitioning || _modalDialogOpen || _allowClose)
+        {
+            return;
+        }
+
         _transitioning = true;
         try
         {
-            CloseSearch();
+            // A background return must not focus the editor again and take focus away
+            // from the application the user just clicked. Settle IME input before saving.
+            CloseSearch(restoreEditorFocus: false);
+            if (NoteEditor.IsKeyboardFocusWithin)
+            {
+                Keyboard.ClearFocus();
+            }
+
+            CompleteTextComposition();
             NoteEditor.IsReadOnly = true;
             CaptureWindowState();
             _settings.LastCaretIndex = NoteEditor.CaretIndex;
@@ -236,6 +255,33 @@ public partial class MainWindow : Window
         {
             _transitioning = false;
         }
+    }
+
+    private void Window_Deactivated(object? sender, EventArgs e) => ScheduleDeactivationCheck();
+
+    private void NoteContextMenu_Closed(object sender, RoutedEventArgs e) => ScheduleDeactivationCheck();
+
+    private void ScheduleDeactivationCheck()
+    {
+        if (!_initialized || !_editing || _transitioning || _allowClose || _deactivationCheckPending)
+        {
+            return;
+        }
+
+        _deactivationCheckPending = true;
+        // Run after focus/IME and popup events have settled. No polling or global input
+        // hook is needed; menu close and modal completion also recheck deferred returns.
+        _ = Dispatcher.BeginInvoke(async () =>
+        {
+            _deactivationCheckPending = false;
+            if (IsActive || _modalDialogOpen || NoteEditor.ContextMenu?.IsOpen == true ||
+                OwnedWindows.Cast<Window>().Any(window => window.IsActive))
+            {
+                return;
+            }
+
+            await ExitEditingModeAsync();
+        }, DispatcherPriority.Background);
     }
 
     private void ApplyDesktopModeUi()
@@ -666,10 +712,10 @@ public partial class MainWindow : Window
         SearchBox.SelectAll();
     }
 
-    private void CloseSearch()
+    private void CloseSearch(bool restoreEditorFocus = true)
     {
         SearchPanel.Visibility = Visibility.Collapsed;
-        if (_editing)
+        if (restoreEditorFocus && _editing && IsActive)
         {
             NoteEditor.Focus();
         }
@@ -748,11 +794,23 @@ public partial class MainWindow : Window
         _settings.LastCaretIndex = NoteEditor.CaretIndex;
         SettingsWindow dialog = new(_settings, _paths.RootDirectory) { Owner = this };
         _modalDialogOpen = true;
-        bool accepted = dialog.ShowDialog() == true;
-        _modalDialogOpen = false;
+        bool accepted;
+        try
+        {
+            accepted = dialog.ShowDialog() == true;
+        }
+        finally
+        {
+            _modalDialogOpen = false;
+            ScheduleDeactivationCheck();
+        }
+
         if (!accepted || dialog.ResultSettings is not DeskNoteSettings updated)
         {
-            NoteEditor.Focus();
+            if (IsActive)
+            {
+                NoteEditor.Focus();
+            }
             return;
         }
 
@@ -780,7 +838,10 @@ public partial class MainWindow : Window
             SetStatus($"设置保存失败：{exception.Message}", isError: true);
         }
 
-        NoteEditor.Focus();
+        if (IsActive)
+        {
+            NoteEditor.Focus();
+        }
     }
 
     private void Exit_Click(object sender, RoutedEventArgs e) => Close();

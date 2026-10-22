@@ -16,6 +16,7 @@
         Closing="Window_Closing"
         Loaded="Window_Loaded"
         SourceInitialized="Window_SourceInitialized"
+        Deactivated="Window_Deactivated"
         PreviewMouseLeftButtonDown="Window_PreviewMouseLeftButtonDown"
         PreviewKeyDown="Window_PreviewKeyDown">
     <Border x:Name="WindowBorder" BorderThickness="1" BorderBrush="#557A6A35">
@@ -99,7 +100,7 @@
                      ToolTip="非空行自动成为待办项；点击行首方框切换完成状态"
                      AutomationProperties.Name="单页笔记编辑区">
                 <TextBox.ContextMenu>
-                    <ContextMenu>
+                    <ContextMenu Closed="NoteContextMenu_Closed">
                         <MenuItem Command="ApplicationCommands.Undo" Header="撤销" InputGestureText="Ctrl+Z" />
                         <MenuItem Command="ApplicationCommands.Redo" Header="重做" InputGestureText="Ctrl+Y" />
                         <Separator />
@@ -118,7 +119,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBlock x:Name="StatusText" VerticalAlignment="Center" Text="正在编辑" TextTrimming="CharacterEllipsis" />
-                <TextBlock Grid.Column="1" VerticalAlignment="Center" Opacity="0.72" Text="Esc / 快捷键：保存并回到桌面" />
+                <TextBlock Grid.Column="1" VerticalAlignment="Center" Opacity="0.72" Text="点击外部 / Esc：保存并回到桌面" />
             </Grid>
         </Grid>
     </Border>
