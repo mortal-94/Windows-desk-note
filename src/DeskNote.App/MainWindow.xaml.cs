@@ -636,8 +636,6 @@ public partial class MainWindow : Window
             return;
         }
 
-        int selectionStart = NoteEditor.SelectionStart;
-        int selectionLength = NoteEditor.SelectionLength;
         char replacement = TodoTextService.ToggleMarker(NoteEditor.Text[lineStart]);
         _suppressTextChanged = true;
         NoteEditor.BeginChange();
@@ -652,9 +650,8 @@ public partial class MainWindow : Window
             _suppressTextChanged = false;
         }
 
-        NoteEditor.Select(
-            Math.Clamp(selectionStart, 0, NoteEditor.Text.Length),
-            Math.Clamp(selectionLength, 0, NoteEditor.Text.Length - Math.Clamp(selectionStart, 0, NoteEditor.Text.Length)));
+        NoteEditor.Focus();
+        NoteEditor.Select(lineStart + 2, 0); // Skip the marker and its separator space.
         SetStatus(replacement == TodoTextService.CheckedMarker ? "已完成" : "已取消完成");
         _autoSaver.Schedule(NoteEditor.Text, TimeSpan.FromSeconds(_settings.AutoSaveDelaySeconds));
         e.Handled = true;

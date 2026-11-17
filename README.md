@@ -2,12 +2,12 @@
 
 DeskNote 是一张常驻 Windows 桌面的单页 TODO 草稿纸。它只有一个连续文档：点击笔记或按全局快捷键进入编辑，点击笔记外部、再次按快捷键或 `Esc` 自动保存并回到桌面层。
 
-当前版本：`0.2.6`。
+当前版本：`0.2.7`。历次更新见[版本记录](CHANGELOG.md)。
 
 从 [GitHub Releases](https://github.com/mortal-94/Windows-desk-note/releases/latest) 下载 Windows x64 便携版：
 
-- `DeskNote-v0.2.6-win-x64.zip`：包含 .NET 运行时，解压后运行 `DeskNote.exe`；
-- `DeskNote-v0.2.6-win-x64-framework-dependent.zip`：精简版，需要预先安装 .NET 10 Desktop Runtime x64；
+- `DeskNote-v0.2.7-win-x64.zip`：包含 .NET 运行时，解压后运行 `DeskNote.exe`；
+- `DeskNote-v0.2.7-win-x64-framework-dependent.zip`：精简版，需要预先安装 .NET 10 Desktop Runtime x64；
 - `SHA256SUMS.txt`：下载文件的 SHA-256 校验值。
 
 升级前在旧版笔记中点击“退出”，确认保存成功后再启动新版。请完整解压 ZIP；笔记保存在用户数据目录，升级时保留该目录。发布包不包含任何个人笔记、设置或备份。
